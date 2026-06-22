@@ -1,7 +1,7 @@
 import createHttpError from 'http-errors';
 import Note from '../models/note.js';
 
-/* ---------------- CREATE ---------------- */
+/* ---------------- CREATE NOTE ---------------- */
 export const createNote = async (req, res) => {
   const { title, content, tag } = req.body;
 
@@ -15,7 +15,7 @@ export const createNote = async (req, res) => {
   res.status(201).json(note);
 };
 
-/* ---------------- GET ALL (WITH PAGINATION + FILTER) ---------------- */
+/* ---------------- GET ALL NOTES (pagination + search + filter) ---------------- */
 export const getAllNotes = async (req, res) => {
   const { page = 1, perPage = 10, search = '', tag } = req.query;
 
@@ -23,10 +23,15 @@ export const getAllNotes = async (req, res) => {
     userId: req.user._id,
   };
 
+  /* search by title + content */
   if (search) {
-    filter.title = { $regex: search, $options: 'i' };
+    filter.$or = [
+      { title: { $regex: search, $options: 'i' } },
+      { content: { $regex: search, $options: 'i' } },
+    ];
   }
 
+  /* filter by tag */
   if (tag) {
     filter.tag = tag;
   }
@@ -34,7 +39,7 @@ export const getAllNotes = async (req, res) => {
   const skip = (page - 1) * perPage;
 
   const [notes, totalNotes] = await Promise.all([
-    Note.find(filter).skip(skip).limit(perPage),
+    Note.find(filter).skip(skip).limit(Number(perPage)),
     Note.countDocuments(filter),
   ]);
 
@@ -49,7 +54,7 @@ export const getAllNotes = async (req, res) => {
   });
 };
 
-/* ---------------- GET BY ID ---------------- */
+/* ---------------- GET NOTE BY ID ---------------- */
 export const getNoteById = async (req, res) => {
   const { noteId } = req.params;
 
@@ -65,14 +70,19 @@ export const getNoteById = async (req, res) => {
   res.json(note);
 };
 
-/* ---------------- UPDATE ---------------- */
+/* ---------------- UPDATE NOTE ---------------- */
 export const updateNote = async (req, res) => {
   const { noteId } = req.params;
 
   const updatedNote = await Note.findOneAndUpdate(
-    { _id: noteId, userId: req.user._id },
+    {
+      _id: noteId,
+      userId: req.user._id,
+    },
     req.body,
-    { returnDocument: 'after' }, // ✅ FIXED
+    {
+      returnDocument: 'after',
+    },
   );
 
   if (!updatedNote) {
@@ -82,7 +92,7 @@ export const updateNote = async (req, res) => {
   res.json(updatedNote);
 };
 
-/* ---------------- DELETE ---------------- */
+/* ---------------- DELETE NOTE ---------------- */
 export const deleteNote = async (req, res) => {
   const { noteId } = req.params;
 
@@ -95,5 +105,5 @@ export const deleteNote = async (req, res) => {
     throw createHttpError(404, 'Note not found');
   }
 
-  res.status(200).json(deletedNote); // ✅ FIXED (NOT 204)
+  res.status(200).json(deletedNote);
 };
