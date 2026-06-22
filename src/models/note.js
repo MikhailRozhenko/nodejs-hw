@@ -21,6 +21,12 @@ const noteSchema = new Schema(
       trim: true,
       enum: TAGS,
     },
+
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
   },
   {
     timestamps: true,
@@ -28,7 +34,8 @@ const noteSchema = new Schema(
   },
 );
 
-noteSchema.index({ tag: 1 });
+// индекс теперь полезнее с userId (ускоряет выборку заметок пользователя)
+noteSchema.index({ userId: 1, tag: 1 });
 
 const Note = model('Note', noteSchema);
 
