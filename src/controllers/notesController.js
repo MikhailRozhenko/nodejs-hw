@@ -1,5 +1,5 @@
 import createHttpError from 'http-errors';
-import { Note } from '../models/note.js';
+import Note from '../models/note.js';
 
 // CREATE
 export const createNote = async (req, res) => {
