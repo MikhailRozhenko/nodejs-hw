@@ -1,62 +1,8 @@
-import bcrypt from 'bcrypt';
 import createHttpError from 'http-errors';
-import { Session } from '../models/session.js';
-import { User } from '../models/user.js';
-import { createSession, setSessionCookies } from '../services/auth.js';
-
-export const registerUser = async (req, res) => {
-  const { email, password } = req.body;
-
-  const existingUser = await User.findOne({ email });
-
-  if (existingUser) {
-    throw createHttpError(400, 'Email in use');
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const user = await User.create({
-    email,
-    password: hashedPassword,
-  });
-
-  const session = await createSession(user._id);
-
-  setSessionCookies(res, session);
-
-  res.status(201).json(user);
-};
-
-export const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    throw createHttpError(401, 'Invalid credentials');
-  }
-
-  const isMatch = await bcrypt.compare(password, user.password);
-
-  if (!isMatch) {
-    throw createHttpError(401, 'Invalid credentials');
-  }
-
-  await Session.deleteMany({ userId: user._id });
-
-  const session = await createSession(user._id);
-
-  setSessionCookies(res, session);
-
-  res.status(200).json(user);
-};
+import Session from '../models/session.js';
 
 export const refreshUserSession = async (req, res) => {
   const { sessionId, refreshToken } = req.cookies;
-
-  if (!sessionId || !refreshToken) {
-    throw createHttpError(401, 'Session not found');
-  }
 
   const session = await Session.findOne({
     _id: sessionId,
@@ -64,37 +10,54 @@ export const refreshUserSession = async (req, res) => {
   });
 
   if (!session) {
-    throw createHttpError(401, 'Session not found');
+    throw createHttpError(401, 'Invalid session');
   }
 
-  if (new Date(session.refreshTokenValidUntil) < new Date()) {
-    throw createHttpError(401, 'Session token expired');
+  // ❗ ПРОВЕРКА СРОКА REFRESH TOKEN
+  const isRefreshExpired = new Date() > session.refreshTokenValidUntil;
+
+  if (isRefreshExpired) {
+    // 💥 ВАЖНО: удалить сессию
+    await Session.deleteOne({ _id: sessionId });
+
+    // 💥 ВАЖНО: очистить cookies
+    res.clearCookie('sessionId');
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+
+    // 💥 потом ошибка
+    throw createHttpError(401, 'Refresh token expired');
   }
 
+  // дальше нормальный flow
   await Session.deleteOne({ _id: sessionId });
 
-  const newSession = await createSession(session.userId);
+  const newSession = await Session.create({
+    userId: session.userId,
+  });
 
-  setSessionCookies(res, newSession);
+  res.cookie('sessionId', newSession._id.toString(), {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+
+  res.cookie('accessToken', newSession.accessToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    maxAge: 15 * 60 * 1000,
+  });
+
+  res.cookie('refreshToken', newSession.refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    maxAge: 24 * 60 * 60 * 1000,
+  });
 
   res.status(200).json({
     message: 'Session refreshed',
   });
-};
-
-export const logoutUser = async (req, res) => {
-  const { sessionId } = req.cookies;
-
-  // 1. если есть sessionId — удаляем сессию
-  if (sessionId) {
-    await Session.deleteOne({ _id: sessionId });
-  }
-
-  // 2. очищаем cookies
-  res.clearCookie('sessionId');
-  res.clearCookie('accessToken');
-  res.clearCookie('refreshToken');
-
-  // 3. ответ 204 без тела
-  res.sendStatus(204);
 };

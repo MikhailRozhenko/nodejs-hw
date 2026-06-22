@@ -1,36 +1,40 @@
 import createHttpError from 'http-errors';
-import { Session } from '../models/session.js';
-import { User } from '../models/user.js';
+import Session from '../models/session.js';
+import User from '../models/user.js';
 
 export const authenticate = async (req, res, next) => {
-  const { accessToken } = req.cookies;
+  const { accessToken, sessionId } = req.cookies;
 
-  // 1. нет access token
-  if (!accessToken) {
-    return next(createHttpError(401, 'Missing access token'));
+  // 1. проверка обоих токенов
+  if (!accessToken || !sessionId) {
+    return next(createHttpError(401, 'Unauthorized'));
   }
 
-  // 2. ищем сессию по accessToken
-  const session = await Session.findOne({ accessToken });
+  // 2. поиск сессии по ОБОИМ полям
+  const session = await Session.findOne({
+    _id: sessionId,
+    accessToken,
+  });
 
   if (!session) {
-    return next(createHttpError(401, 'Session not found'));
+    return next(createHttpError(401, 'Invalid session'));
   }
 
-  // 3. проверка срока access token
-  if (new Date(session.accessTokenValidUntil) < new Date()) {
-    return next(createHttpError(401, 'Access token expired'));
+  // 3. проверка срока жизни сессии
+  if (new Date() > session.accessTokenValidUntil) {
+    return next(createHttpError(401, 'Session expired'));
   }
 
-  // 4. ищем пользователя
+  // 4. получаем пользователя
   const user = await User.findById(session.userId);
 
   if (!user) {
-    return next(createHttpError(401));
+    return next(createHttpError(401, 'User not found'));
   }
 
-  // 5. кладём пользователя в req
+  // 5. кладём в req
   req.user = user;
+  req.session = session;
 
   next();
 };
