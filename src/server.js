@@ -24,18 +24,18 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
-// ROUTES
+// routes
 app.use(authRouter);
 app.use(userRouter);
 app.use(notesRouter);
 
-// 404
+// 404 handler
 app.use(notFoundHandler);
 
 // celebrate errors
 app.use(errors());
 
-// ❗ custom error handler MUST be last
+// ⚠️ ВАЖНО: это ДОЛЖНО быть последним вообще
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
