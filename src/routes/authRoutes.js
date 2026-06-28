@@ -1,55 +1,54 @@
-import { celebrate, Segments } from 'celebrate';
 import { Router } from 'express';
+import { celebrate, Segments } from 'celebrate';
+
 import * as authController from '../controllers/authController.js';
-import {
-  loginUser,
-  refreshUserSession,
-  registerUser,
-  resetPasswordSchema,
-} from '../controllers/authController.js';
 import { validateBody } from '../middleware/validateBody.js';
-import ctrlWrapper from '../utils/ctrlWrapper.js';
+
 import {
   loginUserSchema,
   registerUserSchema,
   requestResetEmailSchema,
+  resetPasswordSchema,
 } from '../validations/authValidation.js';
-
-import { logoutUser } from '../controllers/authController.js';
 
 const router = Router();
 
+// REGISTER
 router.post(
   '/register',
   celebrate({
     [Segments.BODY]: registerUserSchema,
   }),
-  registerUser,
+  authController.registerUser,
 );
 
+// LOGIN
 router.post(
   '/login',
   celebrate({
     [Segments.BODY]: loginUserSchema,
   }),
-  loginUser,
+  authController.loginUser,
 );
 
-// 🔄 refresh session (cookies only, no body)
-router.post('/refresh', refreshUserSession);
+// REFRESH
+router.post('/refresh', authController.refreshUserSession);
 
-router.post('/logout', logoutUser);
+// LOGOUT
+router.post('/logout', authController.logoutUser);
 
+// REQUEST RESET EMAIL
 router.post(
   '/request-reset-email',
   validateBody(requestResetEmailSchema),
-  ctrlWrapper(authController.requestResetEmail),
+  authController.requestResetEmail,
 );
 
+// RESET PASSWORD
 router.post(
   '/reset-password',
   validateBody(resetPasswordSchema),
-  ctrlWrapper(authController.resetPassword),
+  authController.resetPassword,
 );
 
 export default router;
