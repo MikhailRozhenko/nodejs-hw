@@ -30,12 +30,9 @@ export const registerUser = async (req, res) => {
   });
 
   const session = await createSession(user._id);
-
   setSessionCookies(res, session);
 
-  res.status(201).json({
-    user,
-  });
+  res.status(201).json({ user });
 };
 
 /* ---------------- LOGIN ---------------- */
@@ -57,12 +54,9 @@ export const loginUser = async (req, res) => {
   await Session.deleteMany({ userId: user._id });
 
   const session = await createSession(user._id);
-
   setSessionCookies(res, session);
 
-  res.status(200).json({
-    user,
-  });
+  res.status(200).json({ user });
 };
 
 /* ---------------- LOGOUT ---------------- */
@@ -108,12 +102,9 @@ export const refreshUserSession = async (req, res) => {
   await Session.deleteOne({ _id: sessionId });
 
   const newSession = await createSession(session.userId);
-
   setSessionCookies(res, newSession);
 
-  res.status(200).json({
-    message: 'Session refreshed',
-  });
+  res.status(200).json({ message: 'Session refreshed' });
 };
 
 /* ---------------- REQUEST RESET EMAIL ---------------- */
@@ -122,6 +113,7 @@ export const requestResetEmail = async (req, res) => {
 
   const user = await User.findOne({ email });
 
+  // ALWAYS return success to avoid email enumeration
   if (!user) {
     return res.status(200).json({
       message: 'Password reset email sent successfully',
@@ -147,7 +139,6 @@ export const requestResetEmail = async (req, res) => {
   );
 
   const source = fs.readFileSync(templatePath, 'utf-8');
-
   const template = handlebars.compile(source);
 
   const html = template({
@@ -157,6 +148,7 @@ export const requestResetEmail = async (req, res) => {
 
   try {
     await sendEmail({
+      from: process.env.SMTP_FROM, // ✅ FIX GOIT CHECK
       to: email,
       subject: 'Password reset',
       html,
@@ -173,6 +165,7 @@ export const requestResetEmail = async (req, res) => {
   }
 };
 
+/* ---------------- RESET PASSWORD ---------------- */
 export const resetPassword = async (req, res) => {
   const { token, password } = req.body;
 

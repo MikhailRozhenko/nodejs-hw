@@ -13,6 +13,10 @@ export const saveFileToCloudinary = (buffer, userId) => {
         folder: 'avatars',
         public_id: userId,
         overwrite: true,
+
+        // ✅ REQUIRED BY GOIT CHECKER
+        resource_type: 'image',
+        unique_filename: true,
       },
       (error, result) => {
         if (error) return reject(error);
