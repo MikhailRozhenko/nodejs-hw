@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import 'dotenv/config';
 import express from 'express';
+import userRouter from './routes/userRoutes.js';
 
 import { connectMongoDB } from './db/connectMongoDB.js';
 
@@ -50,5 +51,7 @@ const start = async () => {
     process.exit(1);
   }
 };
+
+app.use('/users', userRouter);
 
 start();
