@@ -20,22 +20,22 @@ import { authenticate } from '../middleware/authenticate.js';
 
 const router = Router();
 
-// 🔒 защита всех routes
+// 🔒 protect all routes
 router.use(authenticate);
 
 // GET all notes
-router.get('/notes', celebrate(getAllNotesSchema), getAllNotes);
+router.get('/', celebrate(getAllNotesSchema), getAllNotes);
 
 // GET note by id
-router.get('/notes/:noteId', celebrate(noteIdSchema), getNoteById);
+router.get('/:noteId', celebrate(noteIdSchema), getNoteById);
 
 // CREATE note
-router.post('/notes', celebrate(createNoteSchema), createNote);
+router.post('/', celebrate(createNoteSchema), createNote);
 
 // DELETE note
-router.delete('/notes/:noteId', celebrate(noteIdSchema), deleteNote);
+router.delete('/:noteId', celebrate(noteIdSchema), deleteNote);
 
 // UPDATE note
-router.patch('/notes/:noteId', celebrate(updateNoteSchema), updateNote);
+router.patch('/:noteId', celebrate(updateNoteSchema), updateNote);
 
 export default router;
