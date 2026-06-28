@@ -1,6 +1,7 @@
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
+import mongoose from 'mongoose';
 
 import authRouter from './routes/authRoutes.js';
 import userRouter from './routes/userRoutes.js';
@@ -9,34 +10,40 @@ import { errors } from 'celebrate';
 import { logger } from './middleware/logger.js';
 import { notFoundHandler } from './middleware/notFoundHandler.js';
 
-import connectDB from './db/connectDB.js';
-
 const app = express();
 
+/* ---------------- MIDDLEWARE ---------------- */
 app.use(logger);
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
-// ROUTES
+/* ---------------- ROUTES ---------------- */
 app.use(authRouter);
 app.use(userRouter);
 
-// 404 — ВАЖНО СРАЗУ ПОСЛЕ РОУТОВ
+/* ---------------- 404 ---------------- */
 app.use(notFoundHandler);
 
-// ERROR HANDLER — ПОСЛЕДНИЙ
+/* ---------------- ERROR HANDLER ---------------- */
 app.use(errors());
 
+/* ---------------- DB + SERVER START ---------------- */
 const PORT = process.env.PORT || 3000;
 
-connectDB()
-  .then(() => {
+const startServer = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URL);
+
+    console.log('MongoDB connected');
+
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
-  })
-  .catch((err) => {
+  } catch (err) {
     console.error('DB connection error:', err);
     process.exit(1);
-  });
+  }
+};
+
+startServer();
