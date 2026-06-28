@@ -8,7 +8,7 @@ import {
   resetPasswordSchema,
 } from '../controllers/authController.js';
 import { validateBody } from '../middleware/validateBody.js';
-import { ctrlWrapper } from '../utils/ctrlWrapper.js';
+import ctrlWrapper from '../utils/ctrlWrapper.js';
 import {
   loginUserSchema,
   registerUserSchema,
