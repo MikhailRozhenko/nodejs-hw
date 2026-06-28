@@ -10,6 +10,8 @@ import notesRouter from './routes/notesRoutes.js';
 import userRouter from './routes/userRoutes.js';
 
 import { errors } from 'celebrate';
+
+import { errorHandler } from './middleware/errorHandler.js';
 import { logger } from './middleware/logger.js';
 import { notFoundHandler } from './middleware/notFoundHandler.js';
 
@@ -27,15 +29,17 @@ app.use(authRouter);
 app.use(userRouter);
 app.use(notesRouter);
 
-// 404 — строго после роутов
+// 404
 app.use(notFoundHandler);
 
-// errors — последний
+// celebrate errors
 app.use(errors());
+
+// ❗ custom error handler MUST be last
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
-// DB + server start
 connectMongoDB()
   .then(() => {
     app.listen(PORT, () => {
