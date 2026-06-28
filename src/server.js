@@ -12,38 +12,34 @@ import { notFoundHandler } from './middleware/notFoundHandler.js';
 
 const app = express();
 
-/* ---------------- MIDDLEWARE ---------------- */
 app.use(logger);
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
-/* ---------------- ROUTES ---------------- */
+// ROUTES
 app.use(authRouter);
 app.use(userRouter);
 
-/* ---------------- 404 ---------------- */
+// 404
 app.use(notFoundHandler);
 
-/* ---------------- ERROR HANDLER ---------------- */
+// errors LAST
 app.use(errors());
 
-/* ---------------- DB + SERVER START ---------------- */
 const PORT = process.env.PORT || 3000;
 
-const startServer = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URL);
-
-    console.log('MongoDB connected');
+// 👉 прямое подключение к MongoDB
+mongoose
+  .connect(process.env.MONGO_URL)
+  .then(() => {
+    console.log('✅ MongoDB connected');
 
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
-  } catch (err) {
-    console.error('DB connection error:', err);
+  })
+  .catch((err) => {
+    console.error('DB error:', err);
     process.exit(1);
-  }
-};
-
-startServer();
+  });

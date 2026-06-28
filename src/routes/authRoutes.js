@@ -1,4 +1,5 @@
-import { Router, celebrate } from 'celebrate';
+import pkg from 'celebrate';
+import { Router } from 'express';
 
 import * as authController from '../controllers/authController.js';
 
@@ -9,19 +10,25 @@ import {
   resetPasswordSchema,
 } from '../validations/authValidation.js';
 
+const { celebrate, Segments } = pkg;
+
 const router = Router();
 
 // REGISTER
 router.post(
   '/register',
-  celebrate({ body: registerUserSchema }),
+  celebrate({
+    [Segments.BODY]: registerUserSchema,
+  }),
   authController.registerUser,
 );
 
 // LOGIN
 router.post(
   '/login',
-  celebrate({ body: loginUserSchema }),
+  celebrate({
+    [Segments.BODY]: loginUserSchema,
+  }),
   authController.loginUser,
 );
 
@@ -34,14 +41,18 @@ router.post('/logout', authController.logoutUser);
 // REQUEST RESET EMAIL
 router.post(
   '/request-reset-email',
-  celebrate({ body: requestResetEmailSchema }),
+  celebrate({
+    [Segments.BODY]: requestResetEmailSchema,
+  }),
   authController.requestResetEmail,
 );
 
 // RESET PASSWORD
 router.post(
   '/reset-password',
-  celebrate({ body: resetPasswordSchema }),
+  celebrate({
+    [Segments.BODY]: resetPasswordSchema,
+  }),
   authController.resetPassword,
 );
 
