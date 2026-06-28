@@ -1,7 +1,6 @@
 import crypto from 'crypto';
-import { Session } from '../models/session.js';
-
 import { FIFTEEN_MINUTES, ONE_DAY } from '../constants/time.js';
+import Session from '../models/session.js';
 
 /* ---------------- TOKEN ---------------- */
 const generateToken = () => crypto.randomBytes(30).toString('hex');
