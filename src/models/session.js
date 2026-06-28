@@ -31,5 +31,10 @@ const sessionSchema = new Schema(
 
 const Session = model('Session', sessionSchema);
 
-/* ✅ FIX: named export */
-export { Session };
+/*
+  ⚠️ ВАЖНО:
+  у тебя в authenticate.js сейчас:
+  import Session from '../models/session.js';
+*/
+
+export default Session;
